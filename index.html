@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>The Endless Mini</title>
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <h1>The Endless Mini</h1>
+      <p class="tagline">A fresh 5&times;5 crossword whenever you want one.</p>
+    </div>
+    <div class="controls">
+      <div class="timer" id="timer" title="Elapsed time">0:00</div>
+      <button class="btn" id="pauseBtn" title="Pause the clock">Pause</button>
+      <button class="btn btn-primary" id="newBtn">New Puzzle</button>
+      <div class="menu-wrap">
+        <button class="btn" id="checkBtn" aria-haspopup="true">Check &#9662;</button>
+        <div class="menu" id="checkMenu" hidden>
+          <button data-check="letter">Check Square</button>
+          <button data-check="word">Check Word</button>
+          <button data-check="puzzle">Check Puzzle</button>
+        </div>
+      </div>
+      <div class="menu-wrap">
+        <button class="btn" id="revealBtn" aria-haspopup="true">Reveal &#9662;</button>
+        <div class="menu" id="revealMenu" hidden>
+          <button data-reveal="letter">Reveal Square</button>
+          <button data-reveal="word">Reveal Word</button>
+          <button data-reveal="puzzle">Reveal Puzzle (gives up)</button>
+        </div>
+      </div>
+      <button class="btn" id="clearBtn">Clear</button>
+      <button class="btn btn-icon" id="soundBtn" title="Victory sound" aria-pressed="true">&#128266;</button>
+    </div>
+  </header>
+
+  <main class="board">
+    <section class="play">
+      <div class="puzzle-meta">
+        <span class="chip" id="themeChip">Theme</span>
+        <span class="puzzle-id" id="puzzleId"></span>
+      </div>
+
+      <div class="clue-bar" id="clueBar">
+        <button class="arrow" id="prevClue" aria-label="Previous clue">&#8249;</button>
+        <div class="clue-bar-text"><span id="clueBarNum"></span> <span id="clueBarText">Generating&hellip;</span></div>
+        <button class="arrow" id="nextClue" aria-label="Next clue">&#8250;</button>
+      </div>
+
+      <div class="grid-wrap">
+        <div class="grid" id="grid" role="grid" aria-label="Crossword grid"></div>
+        <div class="grid-loading" id="gridLoading">Building a puzzle&hellip;</div>
+        <div class="paused-veil" id="pausedVeil" hidden>
+          <span class="paused-title">Paused</span>
+          <button class="btn btn-primary" id="resumeBtn">Resume</button>
+        </div>
+      </div>
+      <div class="nudge" id="nudge" hidden></div>
+
+      <div class="keyboard" id="keyboard"></div>
+    </section>
+
+    <aside class="clues">
+      <div class="clue-col">
+        <h3>Across</h3>
+        <ol class="clue-list" id="acrossList"></ol>
+      </div>
+      <div class="clue-col">
+        <h3>Down</h3>
+        <ol class="clue-list" id="downList"></ol>
+      </div>
+    </aside>
+  </main>
+
+  <section class="stats">
+    <div class="stats-head">
+      <h2>Your Record</h2>
+      <button class="btn btn-quiet" id="resetStats">Reset history</button>
+    </div>
+    <div class="stat-grid" id="statGrid"></div>
+    <h3 class="history-title">Recent puzzles</h3>
+    <ul class="history" id="historyList"></ul>
+  </section>
+
+  <footer class="foot">
+    Type letters to fill squares &middot; Arrow keys move &middot; Space flips Across/Down &middot; Enter goes to the next row or column, Shift+Enter the previous one
+  </footer>
+</div>
+
+<div class="overlay" id="confirmOverlay" hidden>
+  <div class="modal">
+    <h2 id="confirmTitle"></h2>
+    <p id="confirmBody"></p>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="confirmOk">Yes</button>
+      <button class="btn" id="confirmCancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="modal">
+    <h2 id="modalTitle">Solved!</h2>
+    <p id="modalBody"></p>
+    <div class="modal-stats" id="modalStats"></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="modalNew">Play another</button>
+      <button class="btn" id="modalClose">Close</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/words3.js"></script>
+<script src="js/words4.js"></script>
+<script src="js/words5.js"></script>
+<script src="js/themes.js"></script>
+<script src="js/generator.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
