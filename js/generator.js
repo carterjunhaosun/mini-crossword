@@ -42,11 +42,37 @@ const PATTERNS = [
    ".....",
    ".....",
    "#....",
+   "##..."],
+
+  // These four need three interlocking 5-letter entries. They were impossible
+  // with the original word bank and became viable once it grew.
+  ["....#",
+   ".....",
+   ".....",
+   ".....",
+   "#...."],
+
+  ["#....",
+   ".....",
+   ".....",
+   ".....",
+   "....#"],
+
+  ["...##",
+   "....#",
+   ".....",
+   ".....",
+   "....."],
+
+  ["...##",
+   ".....",
+   ".....",
+   ".....",
    "##..."]
 ];
 
 // Weighted by how readily each one fills, so a new puzzle arrives quickly.
-const PATTERN_WEIGHTS = [6, 6, 8, 8, 5, 4];
+const PATTERN_WEIGHTS = [6, 6, 8, 8, 5, 4, 4, 5, 5, 6];
 
 const BANK = (() => {
   const byLen = { 3: [], 4: [], 5: [] };
@@ -77,6 +103,41 @@ const BANK = (() => {
   }
   return { byLen, clues, index };
 })();
+
+/* ---- memory of recent puzzles ------------------------------------------
+   The fill always returns the FIRST solution it finds, which biases it toward
+   the same well-connected corner of the word bank. Remembering what came up
+   lately and trying those words last pushes the search somewhere new. */
+
+const RECENT_KEY = "endlessMini.recent.v1";
+const RECENT_WORDS_MAX = 550;    // roughly the last 55 puzzles' answers
+const RECENT_PUZZLES_MAX = 700;  // exact grids to refuse to serve again
+
+const recent = { words: [], wordSet: new Set(), puzzles: [] };
+
+(function loadRecent() {
+  try {
+    if (typeof localStorage === "undefined") return;
+    const saved = JSON.parse(localStorage.getItem(RECENT_KEY) || "{}");
+    recent.words = Array.isArray(saved.words) ? saved.words : [];
+    recent.puzzles = Array.isArray(saved.puzzles) ? saved.puzzles : [];
+    recent.wordSet = new Set(recent.words);
+  } catch {}
+})();
+
+function rememberPuzzle(answers, signature) {
+  recent.words.push(...answers);
+  while (recent.words.length > RECENT_WORDS_MAX) recent.words.shift();
+  recent.wordSet = new Set(recent.words);
+
+  recent.puzzles.push(signature);
+  while (recent.puzzles.length > RECENT_PUZZLES_MAX) recent.puzzles.shift();
+
+  try {
+    if (typeof localStorage === "undefined") return;
+    localStorage.setItem(RECENT_KEY, JSON.stringify({ words: recent.words, puzzles: recent.puzzles }));
+  } catch {}
+}
 
 function shuffle(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
@@ -185,19 +246,27 @@ function fill(slots, used, budget) {
   const open = slots.filter((s) => !s.word);
   if (open.length === 0) return true;
 
-  // Most-constrained slot first.
+  // Most-constrained slot first, breaking ties at random so the search doesn't
+  // walk the grid in the same order every time.
   let best = null, bestCands = null;
   for (const s of open) {
     const cands = candidatesFor(s, slots, used);
     if (cands.length === 0) return false;
-    if (!bestCands || cands.length < bestCands.length) {
+    const better = !bestCands || cands.length < bestCands.length ||
+      (cands.length === bestCands.length && Math.random() < 0.5);
+    if (better) {
       best = s; bestCands = cands;
       if (cands.length === 1) break;
     }
   }
 
-  shuffle(bestCands);
-  const tries = bestCands.slice(0, 60);
+  // Words that haven't shown up lately go first; recent ones stay available as
+  // a fallback so a grid can still be filled when the fresh options run out.
+  const fresh = [], stale = [];
+  for (const w of bestCands) (recent.wordSet.has(w) ? stale : fresh).push(w);
+  shuffle(fresh);
+  shuffle(stale);
+  const tries = fresh.concat(stale).slice(0, 80);
   for (const word of tries) {
     if (budget.nodes-- < 0) return false;
     best.word = word;
@@ -292,6 +361,11 @@ function generatePuzzle(options = {}) {
     if (!result) continue;
 
     const { slots, planted } = result;
+
+    // Don't hand back a grid that's still fresh in the player's memory.
+    const signature = slots.map((s) => s.word).join("-");
+    if (recent.puzzles.includes(signature) && attempt < 50) continue;
+
     numberGrid(pattern, slots);
 
     const entries = slots.map((s) => ({
@@ -303,6 +377,8 @@ function generatePuzzle(options = {}) {
       answer: s.word,
       clue: BANK.clues.get(s.word)
     }));
+
+    rememberPuzzle(entries.map((e) => e.answer), signature);
 
     const bySort = (a, b) => a.number - b.number;
     return {

@@ -192,7 +192,10 @@ body {
 .grid-wrap { position: relative; }
 .grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  /* minmax(0, 1fr), not 1fr: a bare 1fr track can still grow to fit its
+     content, which let a typed letter stretch its row and column. */
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-rows: repeat(5, minmax(0, 1fr));
   gap: 0;
   background: var(--gridline);
   border: 3px solid var(--gridline);
@@ -211,9 +214,13 @@ body {
   justify-content: center;
   font-size: clamp(22px, 7vw, 38px);
   font-weight: 700;
+  line-height: 1;
   text-transform: uppercase;
   cursor: pointer;
   color: var(--ink);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 .cell.black { background: var(--block); cursor: default; }
 .cell .num {

@@ -52,11 +52,11 @@ Those feed the Played / Solved / Win-rate / streak / best-time tiles and the rec
 
 Each grid is generated fresh rather than pulled from a stash of pre-made puzzles:
 
-1. **Word bank** (`js/words3.js`, `words4.js`, `words5.js`) — about 1,850 common English
-   words (300 three-letter, 700 four-letter, 850 five-letter), each paired with a clue.
+1. **Word bank** (`js/words3.js`, `words4.js`, `words5.js`) — about 3,100 common English
+   words (458 three-letter, 1,101 four-letter, 1,579 five-letter), each paired with a clue.
    Every answer that can appear in a grid comes from here, so an answer is never a
    non-word and never clue-less.
-2. **Grid shape** (`js/generator.js`) — one of six black-square layouts, weighted by how
+2. **Grid shape** (`js/generator.js`) — one of ten black-square layouts, weighted by how
    readily it fills. Every run of open squares is at least 3 letters.
 3. **Theme seed** (`js/themes.js`) — a word from a random category (Animal Kingdom,
    In the Kitchen, Space Case…) is planted in a slot; the puzzle is named after it. If no
@@ -66,8 +66,19 @@ Each grid is generated fresh rather than pulled from a stash of pre-made puzzles
    still has at least one possible word. Candidate lookup goes through a
    position-and-letter index, so a typical grid solves in well under a tenth of a second.
 
-Randomized slot ordering and candidate shuffling mean the same layout yields a different
-puzzle essentially every time.
+5. **Anti-repeat memory** — the search returns the *first* solution it finds, which on its
+   own biases it hard toward the same well-connected corner of the bank (left alone, about
+   1 puzzle in 3 repeated an earlier one). So the last ~55 puzzles' answers and the last 700
+   exact grids are kept in `localStorage`; recently-used words are tried last, and a grid
+   that matches a remembered one is thrown away and re-rolled. Measured over 500 consecutive
+   puzzles: 500 distinct, no repeats, median 38 ms.
+
+Note that the pool is finite, and it grows far faster than the bank does. Every square has
+to satisfy an Across and a Down word at once, so only a fraction of word combinations
+interlock at all — at 1,486 words one layout could reach 163 distinct grids; at 1,857 it
+reached 903; at 3,138 it reaches over 1,800. Growing the bank also made four previously
+impossible layouts (the ones needing three crossing 5-letter entries) viable. Adding more
+words is the single best way to widen it further.
 
 ### Adding your own words
 
